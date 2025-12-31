@@ -1,0 +1,652 @@
+{
+  "name": "AI Email Organizer - Portfolio Ready",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## 📧 AI Inbox Zero Automation\n\n### Overview\nThis workflow implements an intelligent email management system that automatically categorizes, labels, and routes incoming emails using GPT-4o-mini.\n\n**How It Works:**\n1. Fetches unprocessed emails from Gmail inbox\n2. Sends each email to OpenAI for intelligent categorization\n3. Applies appropriate Gmail labels based on AI classification\n4. Archives low-priority emails (Newsletters, Promotions, Social)\n5. Sends Telegram alerts for urgent items\n\n---\n\n### 🔧 Setup Requirements\n\n**Credentials Needed:**\n- ✅ Gmail OAuth2 (for inbox access & label management)\n- ✅ OpenAI API Key (for GPT-4o-mini classification)\n- ✅ Telegram Bot Token (for urgent notifications)\n\n**Gmail Labels to Create:**\n`AI-Urgent`, `AI-Work`, `AI-Personal`, `AI-Finance`, `AI-Subscriptions`, `AI-Newsletters`, `AI-Promotions`, `AI-Social`, `AI-Processed`",
+        "height": 510,
+        "width": 380,
+        "color": 4
+      },
+      "id": "sticky-overview",
+      "name": "Sticky Note - Overview",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -5700,
+        2600
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### 🚀 Initialization Phase\n\n**Purpose:** Build a lookup table of Gmail labels before processing emails.\n\n**Why This Matters:**\nGmail's API requires Label IDs (not names) to add labels. This phase:\n\n1. Fetches all existing Gmail labels\n2. Creates a `Name → ID` mapping\n3. Passes the map downstream to avoid API errors\n\n⚠️ **Note:** You must create the AI-* labels in Gmail first!",
+        "height": 262,
+        "width": 390,
+        "color": 6
+      },
+      "id": "sticky-init",
+      "name": "Sticky Note - Init",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -5540,
+        2860
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### 🔄 Processing Loop\n\n**Pattern:** SplitInBatches for sequential processing\n\n**Benefits:**\n- ✅ Handles API rate limits gracefully\n- ✅ Prevents memory overflow on large inboxes\n- ✅ Enables per-email error handling\n- ✅ Loops back via \"Next Email\" node\n\n**Batch Size:** 1 email at a time for stability",
+        "height": 248,
+        "width": 310,
+        "color": 3
+      },
+      "id": "sticky-loop",
+      "name": "Sticky Note - Loop",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -4800,
+        2860
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### 🧠 AI Intelligence Core\n\n**The Brain of the Workflow**\n\nThis section sends email metadata to OpenAI and parses the structured response.\n\n**Prompt Engineering:**\n- Uses `response_format: json_object` for reliable parsing\n- Temperature: 0.1 (deterministic outputs)\n- Clear category definitions with examples\n\n**Categories Detected:**\n`URGENT` | `WORK` | `PERSONAL` | `FINANCE` | `SOCIAL` | `SUBSCRIPTIONS` | `NEWSLETTERS` | `PROMOTIONS`\n\n**Output:** Priority score (1-4) + multiple categories per email",
+        "height": 318,
+        "width": 360,
+        "color": 5
+      },
+      "id": "sticky-ai",
+      "name": "Sticky Note - AI",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -4380,
+        2790
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### ⚡ Action & Routing Logic\n\n**Decision Flow:**\n\n```\n[Add Labels] → [Archive Check] → [Notify Check] → [Loop Back]\n                    │                    │\n                    ▼                    ▼\n            Archive if:           Telegram if:\n            • Newsletters          • URGENT\n            • Promotions\n            • Social\n            • Subscriptions\n```\n\n**Key Points:**\n- Labels are always applied first\n- Non-essential categories auto-archive (declutter inbox)\n- Urgent emails trigger instant Telegram notification\n- All paths converge to \"Next Email\" to continue the loop",
+        "height": 358,
+        "width": 440,
+        "color": 2
+      },
+      "id": "sticky-routing",
+      "name": "Sticky Note - Routing",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -3780,
+        2700
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "d5aacfe5-a6ae-447c-9a5d-b22245901fe3",
+      "name": "When clicking Execute workflow",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -5520,
+        3180
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "label",
+        "returnAll": true
+      },
+      "id": "08405261-1419-4c63-a21b-226fa1e33e18",
+      "name": "Get All Gmail Labels",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        -5312,
+        3180
+      ],
+      "webhookId": "51f60f35-1dd3-4630-987d-f70d1aaa05da",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "v0zHW3odTlxJaXQQ",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get all labels and create a map of name -> id\nconst labels = $input.all();\nconst labelMap = {};\n\nfor (const item of labels) {\n  const label = item.json;\n  if (label.name && label.id) {\n    labelMap[label.name] = label.id;\n  }\n}\n\n// Store the map for later use\nreturn [{\n  json: {\n    labelMap: labelMap\n  }\n}];"
+      },
+      "id": "3b06015c-dcac-449d-bc94-e890a576402b",
+      "name": "Build Label Map",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -5120,
+        3180
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "limit": 150,
+        "filters": {
+          "q": "label:INBOX -label:AI-Processed"
+        }
+      },
+      "id": "a1611523-5dec-4310-bb32-88ae730ed623",
+      "name": "Get Inbox Emails",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        -4912,
+        3180
+      ],
+      "webhookId": "ae070670-efeb-4d6a-b481-8c13b7ca7a95",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "v0zHW3odTlxJaXQQ",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {
+          "reset": false
+        }
+      },
+      "id": "5a546082-832c-425e-bf1b-73ca90d1d933",
+      "name": "Process One at a Time",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -4720,
+        3180
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "get",
+        "messageId": "={{ $('Process One at a Time').item.json.id }}",
+        "additionalFields": {}
+      },
+      "id": "83afc818-0f16-4b29-8d5c-128e93aa4607",
+      "name": "Get Full Message",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 1,
+      "position": [
+        -4512,
+        3180
+      ],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "v0zHW3odTlxJaXQQ",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first().json;\n\n// Get the label map from earlier - use item() to get fresh reference\nconst labelMapNode = $('Build Label Map').first();\nconst labelMap = labelMapNode ? labelMapNode.json.labelMap : {};\n\n// Handle 'from' field\nlet fromStr = '';\nif (typeof item.from === 'string') {\n  fromStr = item.from;\n} else if (item.from && item.from.value && item.from.value[0]) {\n  const fromObj = item.from.value[0];\n  fromStr = fromObj.name ? `${fromObj.name} <${fromObj.address}>` : fromObj.address;\n} else if (item.from && item.from.text) {\n  fromStr = item.from.text;\n} else {\n  fromStr = 'Unknown';\n}\n\n// CRITICAL: Pass ALL data through in a SINGLE object to avoid Merge issues\nreturn [{\n  json: {\n    emailId: item.id || '',\n    subject: item.subject || '(No Subject)',\n    from: fromStr,\n    snippet: item.snippet || '',\n    labelMap: labelMap,\n    // Add timestamp to ensure uniqueness for debugging\n    _processedAt: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "428edf20-cc76-4ca0-af5a-15eda699287b",
+      "name": "Prepare Email Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -4320,
+        3180
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"gpt-4o-mini\",\n  \"temperature\": 0.1,\n  \"response_format\": { \"type\": \"json_object\" },\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are an expert email organizer. You MUST respond with valid JSON only. No markdown, no explanation.\\n\\nOUTPUT FORMAT: {\\\"categories\\\": [\\\"CATEGORY1\\\", \\\"CATEGORY2\\\"], \\\"priority\\\": 3}\\n\\nVALID CATEGORIES ONLY:\\n- URGENT: Needs immediate action today\\n- WORK: Professional emails from humans (clients, boss, colleagues)\\n- PERSONAL: Friends, Family\\n- FINANCE: Banks, Invoices, Receipts, Payment confirmations\\n- SOCIAL: Social Network Notifications (LinkedIn, Twitter, Facebook notifications)\\n- SUBSCRIPTIONS: Account Security, Login Codes, Password resets, Terms of Service\\n- NEWSLETTERS: Content you subscribed to read (blog digests, news roundups)\\n- PROMOTIONS: Marketing, Sales, Discounts, Ads, \\\"Free\\\", \\\"Win\\\", Upgrade offers\\n\\nRULES:\\n1. Marketing keywords (Sale, Off, Free, Win, Upgrade, Discount) = PROMOTIONS\\n2. Security/login emails = SUBSCRIPTIONS\\n3. Social platform notifications = SOCIAL\\n4. Can assign multiple categories\\n5. Priority: 1=urgent, 2=important, 3=normal, 4=low\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Classify this email:\\n\\nFrom: {{ $json.from }}\\nSubject: {{ $json.subject }}\\nSnippet: {{ $json.snippet }}\"\n    }\n  ]\n}",
+        "options": {}
+      },
+      "id": "bb08d591-4b14-4d69-9600-de88a53aa8a8",
+      "name": "AI Classify (Direct API)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -4112,
+        3180
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "s2U4L80Ixjvj7PPv",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// FIX: Get data from the CURRENT execution context, not from Merge\nconst currentInput = $input.first().json;\n\n// Get the email data from the previous node in the chain (Prepare Email Data)\nconst emailDataNode = $('Prepare Email Data').first();\nconst emailData = emailDataNode ? emailDataNode.json : {};\nconst labelMap = emailData.labelMap || {};\n\n// Extract the LLM response from the HTTP Request result\nlet llmText = '';\ntry {\n  // OpenAI API returns: { choices: [{ message: { content: \"...\" } }] }\n  if (currentInput.choices && currentInput.choices[0] && currentInput.choices[0].message) {\n    llmText = currentInput.choices[0].message.content || '';\n  }\n} catch (e) {\n  llmText = '';\n}\n\n// Default Values\nlet categories = ['WORK']; \nlet priority = 3;\n\n// Parse AI Response\ntry {\n  // Clean up any markdown formatting\n  llmText = llmText.replace(/```json\\n?/gi, '').replace(/```\\n?/gi, '').trim();\n  \n  const match = llmText.match(/\\{[\\s\\S]*\\}/);\n  if (match) {\n    const parsed = JSON.parse(match[0]);\n    \n    // Support SINGLE category (string) or MULTIPLE (array)\n    if (Array.isArray(parsed.categories) && parsed.categories.length > 0) {\n      categories = parsed.categories.map(c => String(c).toUpperCase().trim());\n    } else if (parsed.category) {\n      categories = [String(parsed.category).toUpperCase().trim()];\n    }\n    \n    priority = parsed.priority || 3;\n  }\n} catch (e) {\n  // Log the error for debugging\n  categories = ['WORK'];\n}\n\n// Map Categories to Label IDs\nconst categoryToLabel = {\n  'URGENT': 'AI-Urgent',\n  'WORK': 'AI-Work',\n  'PERSONAL': 'AI-Personal',\n  'FINANCE': 'AI-Finance',\n  'SUBSCRIPTIONS': 'AI-Subscriptions',\n  'NEWSLETTERS': 'AI-Newsletters',\n  'PROMOTIONS': 'AI-Promotions',\n  'SOCIAL': 'AI-Social'\n};\n\n// Create list of Label IDs to add\nlet categoryLabelIds = [];\nlet debugLog = [];\n\n// Log what we received for debugging\ndebugLog.push(`Raw LLM: ${llmText.substring(0, 200)}`);\ndebugLog.push(`Parsed categories: ${JSON.stringify(categories)}`);\ndebugLog.push(`Email subject: ${emailData.subject}`);\n\n// Add the category labels\nfor (const cat of categories) {\n  const labelName = categoryToLabel[cat];\n  \n  if (labelName) {\n    if (labelMap[labelName]) {\n      categoryLabelIds.push(labelMap[labelName]);\n      debugLog.push(`✓ Found ID for ${labelName}`);\n    } else {\n      debugLog.push(`✗ MISSING LABEL IN GMAIL: ${labelName}`);\n    }\n  } else {\n    debugLog.push(`✗ Invalid AI Category: ${cat}`);\n  }\n}\n\n// ALWAYS add AI-Processed\nif (labelMap['AI-Processed']) {\n  categoryLabelIds.push(labelMap['AI-Processed']);\n}\n\n// Logic: Archive if contains ANY \"Archive\" category\nconst archiveTags = ['NEWSLETTERS', 'PROMOTIONS', 'SOCIAL', 'SUBSCRIPTIONS'];\nconst shouldArchive = categories.some(tag => archiveTags.includes(tag));\nconst shouldNotify = categories.includes('URGENT');\n\nreturn [{\n  json: {\n    emailId: emailData.emailId,\n    subject: emailData.subject,\n    categories: categories, \n    categoryLabelIds: categoryLabelIds,\n    debugLog: debugLog,\n    rawLLMResponse: llmText,\n    shouldArchive: shouldArchive,\n    shouldNotify: shouldNotify\n  }\n}];"
+      },
+      "id": "f83bbee9-9c88-477c-8cfb-156982ea22fd",
+      "name": "Parse Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -3904,
+        3180
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $json.emailId }}",
+        "labelIds": "={{ $json.categoryLabelIds }}"
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        -3696,
+        3180
+      ],
+      "id": "4badbc1e-b83c-431c-bfcf-239f4573a2b5",
+      "name": "Add Category + Processed Labels",
+      "webhookId": "38f8dd5e-59a3-4271-9c9c-b72f1a9c885a",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "v0zHW3odTlxJaXQQ",
+          "name": "Gmail account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "archive-check",
+              "leftValue": "={{ $json.shouldArchive }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "399c769c-db75-46d3-955c-8498f6b3a1de",
+      "name": "Should Archive?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -3488,
+        3180
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "removeLabels",
+        "messageId": "={{ $('Parse Result').item.json.emailId }}",
+        "labelIds": [
+          "INBOX"
+        ]
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        -3280,
+        3080
+      ],
+      "id": "a6b74a7c-30a2-4686-8c8c-5d86dd31406e",
+      "name": "Archive (Remove from Inbox)",
+      "webhookId": "eed16f98-e3de-4d42-935f-5330f255685c",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "v0zHW3odTlxJaXQQ",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "a9f10070-4bc7-4099-b5c7-1e5454c63df8",
+      "name": "Keep in Inbox",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        -3280,
+        3280
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "notify-check",
+              "leftValue": "={{ $('Parse Result').item.json.shouldNotify }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "fc647647-cef5-44a5-869d-b97d78e37737",
+      "name": "Should Notify?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -3072,
+        3180
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "YOUR_TELEGRAM_CHAT_ID",
+        "text": "=🚨 URGENT EMAIL\n\nFrom: {{ $('Parse Result').item.json.from }}\nSubject: {{ $('Parse Result').item.json.subject }}",
+        "additionalFields": {}
+      },
+      "id": "d83afaa4-e6c4-4c20-b771-984337a0d191",
+      "name": "Telegram Alert",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -2864,
+        3080
+      ],
+      "webhookId": "f7544212-3512-437a-a19a-2bb9f480ca18",
+      "credentials": {
+        "telegramApi": {
+          "id": "YMdDJmI1VwMNoEbc",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "f1421766-754c-4b87-93a3-d95bc1dd86f0",
+      "name": "No Notification",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        -2864,
+        3280
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "850e6061-76d8-46ba-9555-33c4f65eadad",
+      "name": "All Done",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        -4512,
+        2960
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "c3043dfe-312d-4187-80c5-aa316d80ebce",
+      "name": "Next Email",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        -2656,
+        3180
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking Execute workflow": {
+      "main": [
+        [
+          {
+            "node": "Get All Gmail Labels",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get All Gmail Labels": {
+      "main": [
+        [
+          {
+            "node": "Build Label Map",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Label Map": {
+      "main": [
+        [
+          {
+            "node": "Get Inbox Emails",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Inbox Emails": {
+      "main": [
+        [
+          {
+            "node": "Process One at a Time",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process One at a Time": {
+      "main": [
+        [
+          {
+            "node": "All Done",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get Full Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Full Message": {
+      "main": [
+        [
+          {
+            "node": "Prepare Email Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Email Data": {
+      "main": [
+        [
+          {
+            "node": "AI Classify (Direct API)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Classify (Direct API)": {
+      "main": [
+        [
+          {
+            "node": "Parse Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Result": {
+      "main": [
+        [
+          {
+            "node": "Add Category + Processed Labels",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add Category + Processed Labels": {
+      "main": [
+        [
+          {
+            "node": "Should Archive?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Should Archive?": {
+      "main": [
+        [
+          {
+            "node": "Archive (Remove from Inbox)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Keep in Inbox",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Archive (Remove from Inbox)": {
+      "main": [
+        [
+          {
+            "node": "Should Notify?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Keep in Inbox": {
+      "main": [
+        [
+          {
+            "node": "Should Notify?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Should Notify?": {
+      "main": [
+        [
+          {
+            "node": "Telegram Alert",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram Alert": {
+      "main": [
+        [
+          {
+            "node": "Next Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "No Notification": {
+      "main": [
+        [
+          {
+            "node": "Next Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Next Email": {
+      "main": [
+        [
+          {
+            "node": "Process One at a Time",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "portfolio-v1.0",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "89a651d155ff26dcdbad76cd706aafda14d50b19c33e2e1915931090f3f97af0"
+  },
+  "id": "HBPKMQzxB7LwZiVZ",
+  "tags": []
+}
