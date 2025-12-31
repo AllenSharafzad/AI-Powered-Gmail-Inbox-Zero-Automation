@@ -16,14 +16,23 @@ This workflow transforms your chaotic inbox into an organized, automated system:
 | Step | Action |
 |------|--------|
 | 1️⃣ | Fetches unprocessed emails from Gmail |
+
+
 <img width="1615" height="1298" alt="image" src="https://github.com/user-attachments/assets/9a45f3a7-44ac-40bc-a844-45e60bac3c65" />
 
 | 2️⃣ | Sends email metadata to OpenAI for intelligent classification |
+
+
 <img width="2472" height="1310" alt="image" src="https://github.com/user-attachments/assets/4cb0e75e-7c57-47cd-9285-517dea63b3ad" />
 
 | 3️⃣ | Applies category labels automatically |
+
+
 <img width="2435" height="1287" alt="image" src="https://github.com/user-attachments/assets/49596aee-4d40-47de-887a-1bc27b002db6" />
+
+
 | 4️⃣ | Archives low-priority emails (newsletters, promotions, social) |
+
 
 | 5️⃣ | Sends instant Telegram alerts for urgent items |
 
