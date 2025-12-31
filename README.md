@@ -16,9 +16,15 @@ This workflow transforms your chaotic inbox into an organized, automated system:
 | Step | Action |
 |------|--------|
 | 1️⃣ | Fetches unprocessed emails from Gmail |
+<img width="1615" height="1298" alt="image" src="https://github.com/user-attachments/assets/9a45f3a7-44ac-40bc-a844-45e60bac3c65" />
+
 | 2️⃣ | Sends email metadata to OpenAI for intelligent classification |
+<img width="2472" height="1310" alt="image" src="https://github.com/user-attachments/assets/4cb0e75e-7c57-47cd-9285-517dea63b3ad" />
+
 | 3️⃣ | Applies category labels automatically |
+<img width="2435" height="1287" alt="image" src="https://github.com/user-attachments/assets/49596aee-4d40-47de-887a-1bc27b002db6" />
 | 4️⃣ | Archives low-priority emails (newsletters, promotions, social) |
+
 | 5️⃣ | Sends instant Telegram alerts for urgent items |
 
 ---
@@ -41,6 +47,7 @@ The workflow uses a carefully crafted prompt to classify emails into 8 categorie
 > **Multi-label Support:** A single email can receive multiple categories (e.g., `WORK` + `URGENT`)
 
 ---
+<img width="1953" height="807" alt="image" src="https://github.com/user-attachments/assets/83a9d734-f6eb-46b1-aafc-550b7ee7d9d4" />
 
 ## 🏗️ Workflow Architecture
 
@@ -226,8 +233,8 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 **Allen**  
 MSc Data Science & AI | Automation Enthusiast
 
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-0A66C2?style=flat&logo=linkedin)](https://linkedin.com/in/YOUR_LINKEDIN)
-[![GitHub](https://img.shields.io/badge/GitHub-Follow-181717?style=flat&logo=github)](https://github.com/YOUR_GITHUB)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-0A66C2?style=flat&logo=linkedin)](https://www.linkedin.com/in/alireza-sharafzad/)
+[![GitHub](https://img.shields.io/badge/GitHub-Follow-181717?style=flat&logo=github)](https://github.com/AllenSharafzad)
 
 ---
 
